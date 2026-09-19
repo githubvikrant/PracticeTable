@@ -2,7 +2,7 @@
 
 > A game-like multiplication trainer for primary school students — built for a real classroom.
 
-**Live demo:**  -https://githubvikrant.github.io/PracticeTable/-
+**Live demo:** https://githubvikrant.github.io/PracticeTable/
 
 ---
 
