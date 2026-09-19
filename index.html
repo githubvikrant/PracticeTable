@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Times Tables Adventure 🚀</title>
+  <meta name="description"
+    content="Master multiplication tables 2 to 30 in a fun, game-like adventure for kids and adults!">
+  <meta name="theme-color" content="#0a0918">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --purple: #7c3aed;
+      --purple-glow: rgba(124, 58, 237, 0.4);
+      --purple-light: #a78bfa;
+      --cyan: #22d3ee;
+      --gold: #fbbf24;
+      --gold-glow: rgba(251, 191, 36, 0.4);
+      --success: #34d399;
+      --success-glow: rgba(52, 211, 153, 0.3);
+      --error: #f87171;
+      --error-glow: rgba(248, 113, 113, 0.3);
+      --white: #ffffff;
+      --gray: #94a3b8;
+      --card-bg: rgba(255, 255, 255, 0.06);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --font: 'Nunito', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--font);
+      background: linear-gradient(140deg, #08061a 0%, #18103a 50%, #08061a 100%);
+      color: var(--white);
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    #star-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── SCREENS ── */
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      padding: 20px 16px 40px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* ── GLASS ── */
+    .glass {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 16px;
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.2s;
+      min-height: 52px;
+      letter-spacing: 0.2px;
+    }
+
+    .btn:active {
+      transform: scale(0.95) !important;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple), #9333ea);
+      color: white;
+      box-shadow: 0 4px 24px var(--purple-glow);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 32px var(--purple-glow);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--white);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #f59e0b);
+      color: #1a0800;
+      box-shadow: 0 4px 24px var(--gold-glow);
+    }
+
+    .btn-gold:hover {
+      box-shadow: 0 6px 32px var(--gold-glow);
+      transform: translateY(-2px);
+    }
+
+    /* ── SHARED PROGRESS BAR ── */
+    .bar-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+      transition: width 0.6s ease;
+    }
+
+    /* ────────────────────────────
+       WELCOME SCREEN
+    ──────────────────────────── */
+    #screen-welcome {
+      justify-content: center;
+      gap: 22px;
+      text-align: center;
+    }
+
+    .welcome-rocket {
+      font-size: clamp(5rem, 18vw, 8rem);
+      animation: float 3s ease-in-out infinite;
+      display: block;
+      filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.6));
+    }
+
+    .welcome-title {
+      font-size: clamp(2.2rem, 8vw, 4rem);
+      font-weight: 900;
+      line-height: 1.1;
+      background: linear-gradient(135deg, var(--purple-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .welcome-sub {
+      color: var(--gray);
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* User counter — always visible, prominent */
+    .counter-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: rgba(34, 211, 238, 0.08);
+      border: 1.5px solid rgba(34, 211, 238, 0.25);
+      border-radius: 20px;
+      padding: 14px 28px;
+      min-width: 200px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .counter-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .counter-num {
+      font-size: clamp(2rem, 8vw, 3rem);
+      font-weight: 900;
+      color: var(--cyan);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+      text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+    }
+
+    .counter-num.loading {
+      font-size: 1.4rem;
+      color: rgba(34, 211, 238, 0.5);
+      animation: blink 1.2s step-end infinite;
+    }
+
+    .counter-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: rgba(34, 211, 238, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .counter-globe {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 1rem;
+      opacity: 0.5;
+    }
+
+    .username-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .form-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gray);
+      text-align: left;
+    }
+
+    .username-input {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 16px;
+      border: 2px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--white);
+      font-family: var(--font);
+      font-size: 1.25rem;
+      font-weight: 700;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      text-align: center;
+    }
+
+    .username-input:focus {
+      border-color: var(--purple-light);
+      box-shadow: 0 0 0 3px var(--purple-glow);
+    }
+
+    .username-input::placeholder {
+      color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ────────────────────────────
+       TABLE SELECT SCREEN
+    ──────────────────────────── */
+    #screen-select {
+      gap: 18px;
+    }
+
+    .sel-header {
+      width: 100%;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    .sel-name {
+      color: var(--purple-light);
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 900;
+    }
+
+    .sel-sub {
+      color: var(--gray);
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .ovr-bar {
+      width: 100%;
+      max-width: 700px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .ovr-lbl {
+      color: var(--gray);
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .ovr-pct {
+      font-weight: 900;
+      color: var(--cyan);
+      white-space: nowrap;
+      font-size: 1rem;
+    }
+
+    .table-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(120px, 28vw), 1fr));
+      gap: 10px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .table-card {
+      aspect-ratio: 1;
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      border: 2px solid var(--card-border);
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+    }
+
+    .table-card:not(.locked):hover {
+      transform: translateY(-5px) scale(1.04);
+      box-shadow: 0 14px 36px var(--purple-glow);
+      border-color: var(--purple-light);
+    }
+
+    .table-card:not(.locked):active {
+      transform: scale(0.96);
+    }
+
+    .table-card.locked {
+      opacity: 0.35;
+      cursor: not-allowed;
+      filter: grayscale(0.9);
+    }
+
+    .table-card.mastered {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.5);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+    }
+
+    .table-card.next-up {
+      animation: pulseCard 2s ease-in-out infinite;
+      border-color: var(--purple);
+      background: rgba(124, 58, 237, 0.15);
+    }
+
+    .card-ring {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .card-num {
+      font-size: clamp(1.8rem, 5.5vw, 2.6rem);
+      font-weight: 900;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-pct {
+      font-size: clamp(0.65rem, 1.8vw, 0.8rem);
+      font-weight: 700;
+      color: var(--gray);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ────────────────────────────
+       QUIZ SCREEN
+    ──────────────────────────── */
+    #screen-quiz {
+      justify-content: flex-start;
+      gap: 13px;
+      padding-top: 14px;
+      padding-bottom: 24px;
+    }
+
+    .quiz-topbar {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .quiz-back {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: white;
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .quiz-back:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .quiz-badge {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--purple-light);
+      background: rgba(124, 58, 237, 0.15);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 10px;
+      padding: 7px 14px;
+    }
+
+    .quiz-streak {
+      font-size: 1rem;
+      font-weight: 900;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 7px 12px;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .quiz-prog-wrap {
+      width: 100%;
+      max-width: 480px;
+      padding: 11px 16px;
+    }
+
+    .quiz-prog-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--gray);
+      margin-bottom: 7px;
+    }
+
+    /* fact pips */
+    .pips-row {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .pip {
+      flex: 1;
+      height: 5px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pip-fill {
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+      transform-origin: left;
+      transition: transform 0.5s ease;
+    }
+
+    .pip.done .pip-fill {
+      background: linear-gradient(90deg, var(--gold), #f59e0b);
+    }
+
+    /* timer */
+    .timer-wrap {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+      flex-shrink: 0;
+    }
+
+    .timer-svg {
+      transform: rotate(-90deg);
+    }
+
+    .t-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 5;
+    }
+
+    .t-fg {
+      fill: none;
+      stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.1s linear, stroke 0.4s;
+    }
+
+    .timer-lbl {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 900;
+    }
+
+    /* question */
+    .question-box {
+      width: 100%;
+      max-width: 480px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+
+    .q-text {
+      font-size: clamp(2.4rem, 13vw, 5rem);
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .q-tn {
+      color: var(--purple-light);
+    }
+
+    .q-op {
+      color: var(--gray);
+      font-size: 72%;
+    }
+
+    .q-mn {
+      color: var(--white);
+    }
+
+    .q-eq {
+      color: var(--gray);
+      font-size: 72%;
+    }
+
+    .q-bl {
+      color: var(--cyan);
+    }
+
+    /* new question pop animation */
+    .q-pop {
+      animation: qPop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* answer */
+    .answer-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .answer-box {
+      width: 100%;
+      height: 82px;
+      border-radius: 20px;
+      border: 3px solid var(--card-border);
+      background: var(--card-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(2rem, 9vw, 3.4rem);
+      font-weight: 900;
+      color: var(--cyan);
+      transition: border-color 0.25s, box-shadow 0.25s, color 0.25s;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .answer-box.has {
+      border-color: var(--purple-light);
+    }
+
+    .answer-box.ok {
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: 0 0 30px var(--success-glow);
+      animation: bounceIn 0.4s ease;
+    }
+
+    .answer-box.bad {
+      border-color: var(--error);
+      color: var(--error);
+      box-shadow: 0 0 30px var(--error-glow);
+      animation: shake 0.42s ease;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 3px;
+      height: 0.85em;
+      background: var(--cyan);
+      margin-left: 3px;
+      vertical-align: middle;
+      animation: blink 0.85s step-end infinite;
+    }
+
+    /* speed badge */
+    .speed-badge {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 50px;
+      padding: 4px 13px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      white-space: nowrap;
+      pointer-events: none;
+      animation: badgeIn 0.28s ease;
+      z-index: 5;
+    }
+
+    .speed-badge.lightning {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      color: #1a0800;
+    }
+
+    .speed-badge.great {
+      background: linear-gradient(90deg, var(--success), #059669);
+      color: white;
+    }
+
+    .speed-badge.good {
+      background: linear-gradient(90deg, var(--cyan), #0891b2);
+      color: #0a0918;
+    }
+
+    .speed-badge.slow {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--gray);
+      border: 1px solid var(--card-border);
+    }
+
+    /* wrong reveal */
+    .wrong-reveal {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--error);
+      text-align: center;
+      min-height: 22px;
+      transition: opacity 0.2s;
+    }
+
+    /* ── NUMPAD ── */
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      width: 100%;
+      max-width: 310px;
+      margin: 0 auto;
+    }
+
+    .nk {
+      height: clamp(54px, 13.5vw, 74px);
+      border-radius: 15px;
+      border: 2px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--white);
+      font-family: var(--font);
+      font-size: clamp(1.3rem, 5.5vw, 1.8rem);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.08s, transform 0.08s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+
+    .nk:hover {
+      background: rgba(124, 58, 237, 0.18);
+      border-color: var(--purple-light);
+    }
+
+    .nk:active {
+      transform: scale(0.89);
+      background: rgba(124, 58, 237, 0.38);
+    }
+
+    .nk.del {
+      color: var(--error);
+      font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+    }
+
+    .nk.ok {
+      background: linear-gradient(135deg, var(--success), #059669);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 14px var(--success-glow);
+      font-size: clamp(1.2rem, 4.5vw, 1.6rem);
+    }
+
+    .nk.ok:active {
+      transform: scale(0.89);
+      box-shadow: none;
+    }
+
+    /* ────────────────────────────
+       MILESTONE OVERLAY
+    ──────────────────────────── */
+    .milestone-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: rgba(8, 6, 26, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .milestone-overlay.show {
+      display: flex;
+    }
+
+    .milestone-card {
+      background: rgba(124, 58, 237, 0.12);
+      border: 2px solid rgba(124, 58, 237, 0.5);
+      border-radius: 28px;
+      padding: 36px 28px 28px;
+      text-align: center;
+      max-width: 300px;
+      width: 88%;
+      box-shadow: 0 0 60px var(--purple-glow), 0 0 120px rgba(124, 58, 237, 0.1);
+      animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .ms-emoji {
+      font-size: 4.5rem;
+      display: block;
+      margin-bottom: 12px;
+      animation: float 2s ease-in-out infinite;
+    }
+
+    .ms-title {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .ms-sub {
+      color: var(--gray);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .ms-bar-wrap {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+
+    .ms-bar-fill {
+      height: 100%;
+      border-radius: 8px;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+      transition: width 0.8s ease;
+    }
+
+    .ms-timer-ring {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+    }
+
+    .ms-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: background 0.4s;
+    }
+
+    .ms-dot.active {
+      background: var(--purple-light);
+    }
+
+    /* ────────────────────────────
+       CELEBRATE SCREEN
+    ──────────────────────────── */
+    #screen-celebrate {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+    }
+
+    .cel-trophy {
+      font-size: clamp(5rem, 20vw, 9rem);
+      display: block;
+      animation: bounceIn 0.5s ease, float 3s ease-in-out 0.6s infinite;
+      filter: drop-shadow(0 0 40px rgba(251, 191, 36, 0.6));
+    }
+
+    .cel-title {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cel-sub {
+      font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+      font-weight: 700;
+      color: var(--purple-light);
+    }
+
+    .cel-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 18px 16px;
+      max-width: 420px;
+      width: 100%;
+    }
+
+    .stat-chip {
+      flex: 1;
+      min-width: 90px;
+      padding: 14px 8px;
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .stat-chip-val {
+      font-size: 1.9rem;
+      font-weight: 900;
+    }
+
+    .stat-chip-label {
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: var(--gray);
+      margin-top: 3px;
+    }
+
+    .cel-btns {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── CONFETTI ── */
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+      z-index: 999;
+      animation: confettiFall var(--dur, 3s) ease-in var(--delay, 0s) forwards;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 14, 46, 0.96);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border-radius: 50px;
+      padding: 11px 24px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      z-index: 200;
+      animation: badgeIn 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* ────────────────────────────
+       ANIMATIONS
+    ──────────────────────────── */
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-12px)
+      }
+    }
+
+    @keyframes bounceIn {
+      0% {
+        transform: scale(0.65);
+        opacity: 0
+      }
+
+      60% {
+        transform: scale(1.12);
+        opacity: 1
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      18% {
+        transform: translateX(-11px) rotate(-1.5deg)
+      }
+
+      36% {
+        transform: translateX(11px) rotate(1.5deg)
+      }
+
+      54% {
+        transform: translateX(-8px)
+      }
+
+      72% {
+        transform: translateX(8px)
+      }
+
+      90% {
+        transform: translateX(-4px)
+      }
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    @keyframes badgeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+
+    @keyframes pulseCard {
+
+      0%,
+      100% {
+        box-shadow: 0 0 18px var(--purple-glow)
+      }
+
+      50% {
+        box-shadow: 0 0 36px var(--purple-glow), 0 0 56px rgba(124, 58, 237, 0.2)
+      }
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1
+      }
+
+      100% {
+        transform: translateY(105vh) rotate(720deg);
+        opacity: 0
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.93)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    @keyframes qPop {
+      0% {
+        opacity: 0;
+        transform: scale(0.88) translateY(5px)
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0)
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--purple);
+      border-radius: 3px;
+    }
+
+    /* ────────────────────────────
+       RESPONSIVE — COMPACT QUIZ
+       Covers iPhone SE (375×667) and similar small-screen phones
+    ──────────────────────────── */
+    @media (max-height: 740px) {
+      #screen-quiz {
+        gap: 9px;
+        padding-top: 10px;
+      }
+
+      .quiz-prog-wrap {
+        padding: 9px 14px;
+      }
+
+      .question-box {
+        padding: 13px 16px;
+      }
+
+      .q-text {
+        font-size: clamp(2.2rem, 11vw, 4.2rem);
+      }
+
+      .answer-box {
+        height: 72px;
+        font-size: clamp(1.8rem, 8vw, 3rem);
+      }
+
+      .timer-wrap {
+        width: 56px;
+        height: 56px;
+      }
+
+      .timer-svg {
+        width: 56px !important;
+        height: 56px !important;
+      }
+
+      .nk {
+        height: clamp(50px, 12vw, 64px);
+      }
+    }
+
+    @media (max-height: 660px) {
+      #screen-quiz {
+        gap: 7px;
+        padding-top: 8px;
+      }
+
+      .pips-row {
+        display: none;
+      }
+
+      .timer-wrap {
+        display: none;
+      }
+
+      .quiz-prog-wrap {
+        padding: 7px 14px;
+      }
+
+      .question-box {
+        padding: 10px 14px;
+      }
+
+      .q-text {
+        font-size: clamp(2rem, 10vw, 3.8rem);
+      }
+
+      .answer-box {
+        height: 66px;
+      }
+
+      .nk {
+        height: 48px;
+        border-radius: 12px;
+      }
+
+      .numpad {
+        gap: 7px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .table-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+      }
+
+      .numpad {
+        max-width: 290px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="star-canvas"></canvas>
+
+  <!-- ── MILESTONE OVERLAY ── -->
+  <div class="milestone-overlay" id="ms-overlay" onclick="dismissMilestone()">
+    <div class="milestone-card" onclick="event.stopPropagation()">
+      <span class="ms-emoji" id="ms-emoji">🚀</span>
+      <div class="ms-title" id="ms-title">25% Done!</div>
+      <div class="ms-sub" id="ms-sub">You're getting warmed up!</div>
+      <div class="ms-bar-wrap">
+        <div class="ms-bar-fill" id="ms-bar" style="width:0%"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="dismissMilestone()">Keep going! →</button>
+    </div>
+  </div>
+
+  <!-- ── WELCOME ── -->
+  <div class="screen active" id="screen-welcome">
+    <span class="welcome-rocket">🚀</span>
+    <div>
+      <h1 class="welcome-title">Times Tables<br>Adventure</h1>
+      <p class="welcome-sub">Master × tables the fun way! 🌟</p>
+    </div>
+    <div class="counter-card" aria-live="polite">
+      <span class="counter-globe">🌍</span>
+      <div class="counter-num loading" id="counter-num">…</div>
+      <div class="counter-label">students have learned here</div>
+    </div>
+    <form class="username-form" onsubmit="handleStart(); return false;">
+      <label class="form-label" for="uname">What's your name, adventurer?</label>
+      <input type="text" id="uname" class="username-input" placeholder="Enter your name ✨" maxlength="18"
+        autocomplete="off" autocorrect="off" spellcheck="false">
+      <button type="submit" class="btn btn-primary">🚀 Start Adventure</button>
+    </form>
+  </div>
+
+  <!-- ── TABLE SELECT ── -->
+  <div class="screen" id="screen-select">
+    <div class="sel-header">
+      <div class="sel-name" id="sel-name">Hey!</div>
+      <p class="sel-sub" id="sel-sub">Choose a table to practice</p>
+    </div>
+    <div class="ovr-bar glass">
+      <span class="ovr-lbl">Overall</span>
+      <div class="bar-track">
+        <div class="bar-fill" id="ovr-fill" style="width:0%"></div>
+      </div>
+      <span class="ovr-pct" id="ovr-pct">0%</span>
+    </div>
+    <div class="table-grid" id="table-grid" role="list"></div>
+    <button class="btn btn-secondary" onclick="goHome()" style="margin-top:6px;opacity:0.6;font-size:0.9rem;">← Change
+      Player</button>
+  </div>
+
+  <!-- ── QUIZ ── -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-topbar">
+      <button class="quiz-back" onclick="exitQuiz()">← Back</button>
+      <div class="quiz-badge" id="quiz-badge">×2</div>
+      <div class="quiz-streak" id="quiz-streak">🎯 0</div>
+    </div>
+
+    <div class="quiz-prog-wrap glass">
+      <div class="quiz-prog-labels">
+        <span>Table Progress</span>
+        <span id="quiz-pct">0%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="quiz-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="pips-row" id="pips-row" aria-label="Fact mastery"></div>
+
+    <div class="timer-wrap" aria-hidden="true">
+      <svg class="timer-svg" width="64" height="64" viewBox="0 0 64 64">
+        <circle class="t-bg" cx="32" cy="32" r="27" />
+        <circle class="t-fg" id="timer-fg" cx="32" cy="32" r="27" stroke-dasharray="169.6" stroke-dashoffset="0"
+          stroke="var(--success)" />
+      </svg>
+      <div class="timer-lbl" id="timer-lbl">0</div>
+    </div>
+
+    <div class="question-box glass" aria-live="polite">
+      <div class="q-text" id="q-text"></div>
+    </div>
+
+    <div class="answer-wrap">
+      <div class="answer-box" id="ans-box">
+        <span id="ans-val"></span><span class="cursor" id="cursor"></span>
+      </div>
+      <div id="speed-slot"></div>
+    </div>
+
+    <div class="wrong-reveal" id="wrong-reveal" aria-live="assertive">&nbsp;</div>
+
+    <div class="numpad">
+      <button class="nk" onclick="nk('7')">7</button>
+      <button class="nk" onclick="nk('8')">8</button>
+      <button class="nk" onclick="nk('9')">9</button>
+      <button class="nk" onclick="nk('4')">4</button>
+      <button class="nk" onclick="nk('5')">5</button>
+      <button class="nk" onclick="nk('6')">6</button>
+      <button class="nk" onclick="nk('1')">1</button>
+      <button class="nk" onclick="nk('2')">2</button>
+      <button class="nk" onclick="nk('3')">3</button>
+      <button class="nk del" onclick="nk('del')">⌫</button>
+      <button class="nk" onclick="nk('0')">0</button>
+      <button class="nk ok" onclick="nk('ok')">✓</button>
+    </div>
+  </div>
+
+  <!-- ── CELEBRATE ── -->
+  <div class="screen" id="screen-celebrate">
+    <span class="cel-trophy">🏆</span>
+    <h2 class="cel-title">TABLE MASTERED!</h2>
+    <p class="cel-sub" id="cel-sub">You mastered ×2!</p>
+    <div class="cel-stats glass">
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="cel-acc">—</div>
+        <div class="stat-chip-label">Accuracy</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="cel-time">—</div>
+        <div class="stat-chip-label">Best Speed</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-val" id="cel-streak">—</div>
+        <div class="stat-chip-label">Best Streak</div>
+      </div>
+    </div>
+    <div class="cel-btns">
+      <button class="btn btn-gold" id="cel-next" onclick="goNext()">Next Table →</button>
+      <button class="btn btn-secondary" onclick="showTableSelect()">📚 Menu</button>
+    </div>
+  </div>
+
+  <script>
+    /* ================================================================
+       CONSTANTS
+    ================================================================ */
+    const SK = 'ttadv_v4';
+    const TABLES = Array.from({ length: 29 }, (_, i) => i + 2);
+    const UNLOCK_PCT = 95;
+    const TIMER_MAX = 15;
+    const CIRC_64 = 169.6; // 2*PI*27 (timer SVG r=27)
+
+    /* ================================================================
+       FEEDBACK MESSAGES — varied so it never feels robotic
+    ================================================================ */
+    const MSGS = {
+      lightning: ['⚡ LIGHTNING!', '⚡ BLAZING!', '⚡ INSTANT!', '🚀 WARP SPEED!', '⚡ TOO FAST!'],
+      great: ['🎯 NAILED IT!', '💥 BOOM!', '💪 STRONG!', '🎯 SHARP!', '🌟 STELLAR!'],
+      good: ['✅ CORRECT!', '👌 NICE ONE', '🙌 GOOD JOB', '✨ WELL DONE', '👍 THAT\'S IT'],
+      slow: ['⏱ SPEED UP!', '🐢 TOO SLOW', '💭 THINK FAST', '⏳ FASTER NEXT TIME'],
+    };
+    const WRONG_MSGS = ['Almost! It\'s', 'Not quite —', 'Close! Answer:', 'Try again! It\'s', 'Correct answer:'];
+
+    function randMsg(cat) {
+      const a = MSGS[cat];
+      return a[Math.floor(Math.random() * a.length)];
+    }
+    function randWrong() {
+      return WRONG_MSGS[Math.floor(Math.random() * WRONG_MSGS.length)];
+    }
+
+    /* ================================================================
+       STATE
+    ================================================================ */
+    let S = { username: '', progress: {}, firstVisit: true, cachedCount: null };
+    let curTable = null, curQ = null, curAns = '', streak = 0, locked = false, timerInt = null;
+    let sess = { correct: 0, wrong: 0, bestStreak: 0, bestMs: Infinity };
+    let shownMilestones = new Set();  // reset per table session
+    let msTimer = null;               // auto-dismiss timer
+
+    /* ================================================================
+       PERSISTENCE
+    ================================================================ */
+    function load() {
+      try {
+        const d = JSON.parse(localStorage.getItem(SK) || 'null');
+        if (!d) return;
+        S.username = d.username || '';
+        S.progress = d.progress || {};
+        S.firstVisit = d.firstVisit !== undefined ? d.firstVisit : true;
+        S.cachedCount = d.cachedCount || null;
+      } catch (_) { }
+    }
+    function save() {
+      try { localStorage.setItem(SK, JSON.stringify({ username: S.username, progress: S.progress, firstVisit: S.firstVisit, cachedCount: S.cachedCount })); } catch (_) { }
+    }
+
+    /* ================================================================
+       FACT HELPERS
+    ================================================================ */
+    function fact(t, m) {
+      const ts = String(t), ms = String(m);
+      if (!S.progress[ts]) S.progress[ts] = {};
+      if (!S.progress[ts][ms]) S.progress[ts][ms] = { mastery: 0, bestMs: null, attempts: 0, correct: 0 };
+      return S.progress[ts][ms];
+    }
+    function tPct(t) {
+      let s = 0;
+      for (let m = 1; m <= 10; m++) s += fact(t, m).mastery;
+      return Math.round(s / 10);
+    }
+    function isOpen(t) { return t === 2 || tPct(t - 1) >= UNLOCK_PCT; }
+
+    /* ================================================================
+       SCORING ENGINE
+       
+       Inspired by:
+       ▸ keybr.com  — composite speed × complexity / (errors+1)
+       ▸ SM-2/Anki  — spaced-repetition mastery increments per recall
+       ▸ Typing apps — per-key weakness weighting, streak consistency bonus
+    
+       Parameters:
+       1. Speed        — 0–1 normalized (≤3 s = max, ≥15 s = 0)
+       2. Accuracy     — adaptive penalty: soft early (-15), harder when you know it (-28)
+       3. Consistency  — streak bonus +2/level capped at +12
+       4. Difficulty   — easy tables (2–5) progress 1.8× faster; medium (6–11) 1.4×
+       5. Floor/ceil   — mastery stays in 0–100
+    ================================================================ */
+    function diffMult(table) {
+      if (table <= 5) return 1.8;
+      if (table <= 11) return 1.4;
+      return 1.0;
+    }
+
+    function scoreDelta(correct, ms, curStreak, mastery, table) {
+      if (!correct) {
+        // Softer when still learning, stronger when you should know it
+        if (mastery < 35) return -15;
+        if (mastery < 65) return -22;
+        return -28;
+      }
+      // Speed: 1.0 at ≤3 s, linear decay to 0 at 15 s
+      const spd = ms <= 3000 ? 1.0
+        : ms >= TIMER_MAX * 1000 ? 0.0
+          : 1 - (ms - 3000) / ((TIMER_MAX * 1000) - 3000);
+
+      const base = 5 + spd * 20;                  // 5–25
+      const streakBonus = Math.min(curStreak * 2, 12);    // 0–12
+
+      return Math.round((base + streakBonus) * diffMult(table));
+    }
+
+    function applyScore(t, m, correct, ms) {
+      const f = fact(t, m);
+      const prev = f.mastery;
+      f.mastery = Math.max(0, Math.min(100, f.mastery + scoreDelta(correct, ms, streak, prev, t)));
+      f.attempts++;
+      if (correct) {
+        f.correct++;
+        if (!f.bestMs || ms < f.bestMs) f.bestMs = ms;
+        sess.correct++;
+        if (ms < sess.bestMs) sess.bestMs = ms;
+      } else {
+        sess.wrong++;
+      }
+      save();
+      return prev;  // return previous pct for milestone check
+    }
+
+    /* ================================================================
+       QUESTION SELECTION — weighted spaced repetition
+       Weakest facts appear most (keybr per-key weakness model)
+    ================================================================ */
+    function pickMult(t) {
+      const pool = [];
+      let total = 0;
+      for (let m = 1; m <= 10; m++) {
+        const w = (100 - fact(t, m).mastery) + 10;
+        pool.push({ m, w }); total += w;
+      }
+      // Avoid repeating same question consecutively
+      let list = curQ ? pool.filter(x => x.m !== curQ.multiplier) : pool;
+      if (!list.length) list = pool;
+      const ft = list.reduce((s, x) => s + x.w, 0);
+      let r = Math.random() * ft;
+      for (const { m, w } of list) { r -= w; if (r <= 0) return m; }
+      return list[list.length - 1].m;
+    }
+
+    /* ================================================================
+       SCREENS
+    ================================================================ */
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    /* ================================================================
+       WELCOME
+    ================================================================ */
+    function initWelcome() {
+      const inp = document.getElementById('uname');
+      inp.value = S.username;
+      fetchCount();
+    }
+
+    function handleStart() {
+      const inp = document.getElementById('uname');
+      const name = inp.value.trim();
+      if (!name) {
+        inp.style.borderColor = 'var(--error)';
+        inp.placeholder = 'Please enter your name! 😊';
+        setTimeout(() => { inp.style.borderColor = ''; inp.placeholder = 'Enter your name ✨'; }, 1600);
+        return;
+      }
+      S.username = name; save(); showTableSelect();
+    }
+
+    function goHome() { stopTimer(); showScreen('screen-welcome'); initWelcome(); }
+
+    async function fetchCount() {
+      const el = document.getElementById('counter-num');
+
+      // 1. Show cached count immediately — no waiting
+      const cached = S.cachedCount;
+      if (cached) {
+        el.textContent = Number(cached).toLocaleString();
+        el.classList.remove('loading');
+      }
+
+      // 2. Fetch live count in background
+      try {
+        const url = S.firstVisit
+          ? 'https://api.countapi.xyz/hit/times-tables-adventure-math-v3/visits'
+          : 'https://api.countapi.xyz/get/times-tables-adventure-math-v3/visits';
+        const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        if (!res.ok) throw new Error('bad status');
+        const d = await res.json();
+        if (S.firstVisit) { S.firstVisit = false; }
+        S.cachedCount = d.value;  // persist for next load
+        save();
+        el.textContent = Number(d.value).toLocaleString();
+        el.classList.remove('loading');
+      } catch (_) {
+        // API failed — show cached or a friendly fallback
+        if (!cached) {
+          el.textContent = '800+';
+          el.classList.remove('loading');
+        }
+        // cached already shown above, nothing more to do
+      }
+    }
+
+    /* ================================================================
+       TABLE SELECT
+    ================================================================ */
+    function showTableSelect() {
+      stopTimer();
+      document.getElementById('sel-name').textContent = `Hi ${S.username}! 👋`;
+      const total = TABLES.reduce((s, t) => s + tPct(t), 0);
+      const ovr = Math.round(total / TABLES.length);
+      document.getElementById('ovr-fill').style.width = ovr + '%';
+      document.getElementById('ovr-pct').textContent = ovr + '%';
+      const mastered = TABLES.filter(t => tPct(t) >= UNLOCK_PCT).length;
+      document.getElementById('sel-sub').textContent =
+        mastered === 0 ? 'Start with ×2 and unlock more! 🔓'
+          : mastered === TABLES.length ? '🏆 ALL TABLES MASTERED! Legend!'
+            : `${mastered} of 29 tables mastered — keep it up! 🔥`;
+      renderGrid();
+      showScreen('screen-select');
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('table-grid');
+      grid.innerHTML = '';
+      const nextUp = TABLES.find(t => isOpen(t) && tPct(t) < UNLOCK_PCT);
+
+      TABLES.forEach(table => {
+        const pct = tPct(table);
+        const open = isOpen(table);
+        const mast = pct >= UNLOCK_PCT;
+        const isNext = table === nextUp;
+
+        const card = document.createElement('div');
+        card.className = 'table-card' + (open ? '' : ' locked') + (mast ? ' mastered' : '') + (isNext ? ' next-up' : '');
+        card.setAttribute('role', 'listitem');
+
+        const r = 36, sz = 84, cx = 42, cy = 42, c = 2 * Math.PI * r;
+        const off = c * (1 - pct / 100);
+        const clr = mast ? 'var(--gold)' : 'var(--purple-light)';
+        const ring = pct > 0
+          ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${clr}" stroke-width="4" stroke-linecap="round"
+           stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
+           transform="rotate(-90 ${cx} ${cy})"/>`
+          : '';
+
+        const numClr = mast ? 'var(--gold)' : open ? 'var(--white)' : 'var(--gray)';
+        const numLbl = open ? (mast ? '⭐' : table) : '🔒';
+        const pctLbl = open
+          ? `<span class="card-pct" style="color:${mast ? 'var(--gold)' : 'var(--gray)'}">${mast ? 'MASTERED' : pct + '%'}</span>`
+          : `<span class="card-pct">×${table}</span>`;
+
+        card.innerHTML = `
+      <svg class="card-ring" viewBox="0 0 ${sz} ${sz}" width="${sz}" height="${sz}" aria-hidden="true">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4"/>
+        ${ring}
+      </svg>
+      <span class="card-num" style="color:${numClr}">${numLbl}</span>
+      ${pctLbl}
+    `;
+        if (open) card.addEventListener('click', () => startTable(table));
+        grid.appendChild(card);
+      });
+    }
+
+    /* ================================================================
+       QUIZ
+    ================================================================ */
+    function startTable(t) {
+      curTable = t; streak = 0;
+      sess = { correct: 0, wrong: 0, bestStreak: 0, bestMs: Infinity };
+      shownMilestones.clear();
+
+      document.getElementById('quiz-badge').textContent = `×${t}`;
+      updateQuizUI(); renderPips();
+      showScreen('screen-quiz');
+      nextQ();
+    }
+
+    function nextQ() {
+      locked = false; curAns = '';
+      const m = pickMult(curTable);
+      curQ = { multiplier: m, startMs: Date.now() };
+
+      const box = document.getElementById('ans-box');
+      box.className = 'answer-box';
+      document.getElementById('ans-val').textContent = '';
+      document.getElementById('cursor').style.display = '';
+      document.getElementById('wrong-reveal').innerHTML = '&nbsp;';
+      document.getElementById('speed-slot').innerHTML = '';
+
+      // Pop-in animation
+      const qt = document.getElementById('q-text');
+      qt.classList.remove('q-pop');
+      void qt.offsetWidth; // reflow to restart animation
+      qt.innerHTML = `<span class="q-tn">${curTable}</span><span class="q-op"> &times; </span><span class="q-mn">${m}</span><span class="q-eq"> = </span><span class="q-bl">?</span>`;
+      qt.classList.add('q-pop');
+
+      startTimer(); updateStreakBadge();
+    }
+
+    /* ── TIMER ── */
+    function startTimer() {
+      stopTimer();
+      const fg = document.getElementById('timer-fg');
+      const lbl = document.getElementById('timer-lbl');
+      let el = 0;
+      fg.style.strokeDashoffset = '0';
+      fg.style.stroke = 'var(--success)';
+      lbl.textContent = '0';
+
+      timerInt = setInterval(() => {
+        el += 0.1;
+        const p = Math.min(el / TIMER_MAX, 1);
+        fg.style.strokeDashoffset = (CIRC_64 * p).toFixed(2);
+        lbl.textContent = Math.min(Math.ceil(el), TIMER_MAX);
+        fg.style.stroke = p < 0.4 ? 'var(--success)' : p < 0.7 ? 'var(--gold)' : 'var(--error)';
+      }, 100);
+    }
+    function stopTimer() { clearInterval(timerInt); timerInt = null; }
+
+    /* ── NUMPAD ── */
+    function nk(key) {
+      if (locked) return;
+      if (key === 'del') { curAns = curAns.slice(0, -1); }
+      else if (key === 'ok') { if (curAns.length > 0) submit(); return; }
+      else { if (curAns.length >= 4) return; curAns += key; }
+      document.getElementById('ans-val').textContent = curAns;
+      document.getElementById('ans-box').className = 'answer-box' + (curAns.length ? ' has' : '');
+    }
+
+    /* ── SUBMIT ── */
+    function submit() {
+      if (!curQ || locked) return;
+      locked = true; stopTimer();
+
+      const ms = Date.now() - curQ.startMs;
+      const correct = parseInt(curAns, 10) === curTable * curQ.multiplier;
+      const box = document.getElementById('ans-box');
+      const prevPct = tPct(curTable);
+
+      if (correct) {
+        streak++;
+        if (streak > sess.bestStreak) sess.bestStreak = streak;
+        box.className = 'answer-box ok';
+        showSpeedBadge(ms);
+      } else {
+        streak = 0;
+        box.className = 'answer-box bad';
+        // Show correct answer inside the box after shake
+        setTimeout(() => {
+          document.getElementById('ans-val').textContent = curTable * curQ.multiplier;
+          document.getElementById('cursor').style.display = 'none';
+        }, 120);
+        document.getElementById('wrong-reveal').textContent = `${randWrong()} ${curTable * curQ.multiplier}`;
+      }
+
+      document.getElementById('cursor').style.display = 'none';
+      applyScore(curTable, curQ.multiplier, correct, ms);
+      updateStreakBadge(); updateQuizUI(); renderPips();
+
+      const newPct = tPct(curTable);
+
+      // Check full mastery
+      if (newPct >= UNLOCK_PCT) {
+        setTimeout(showCelebration, 1300);
+        return;
+      }
+
+      // Check 25 / 50 / 75% milestones
+      const hit = checkMilestone(prevPct, newPct);
+      if (!hit) {
+        setTimeout(nextQ, correct ? 820 : 1650);
+      }
+      // if milestone hit, nextQ is called after dismiss
+    }
+
+    function showSpeedBadge(ms) {
+      let cls = 'slow', txt = randMsg('slow');
+      if (ms < 3000) { cls = 'lightning'; txt = randMsg('lightning'); }
+      else if (ms < 6000) { cls = 'great'; txt = randMsg('great'); }
+      else if (ms < 10000) { cls = 'good'; txt = randMsg('good'); }
+      document.getElementById('speed-slot').innerHTML = `<div class="speed-badge ${cls}">${txt}</div>`;
+    }
+
+    function updateStreakBadge() {
+      const fms = streak >= 5 ? '🔥🔥🔥' : streak >= 3 ? '🔥🔥' : streak >= 1 ? '🔥' : '🎯';
+      document.getElementById('quiz-streak').textContent = `${fms} ${streak}`;
+    }
+
+    function updateQuizUI() {
+      const p = tPct(curTable);
+      document.getElementById('quiz-bar').style.width = p + '%';
+      document.getElementById('quiz-pct').textContent = p + '%';
+    }
+
+    function renderPips() {
+      const row = document.getElementById('pips-row');
+      row.innerHTML = '';
+      for (let m = 1; m <= 10; m++) {
+        const f = fact(curTable, m);
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (f.mastery >= 100 ? ' done' : '');
+        pip.title = `${curTable}×${m} — ${f.mastery}%`;
+        pip.innerHTML = `<div class="pip-fill" style="transform:scaleX(${(f.mastery / 100).toFixed(2)})"></div>`;
+        row.appendChild(pip);
+      }
+    }
+
+    function exitQuiz() { stopTimer(); dismissMilestone(false); showTableSelect(); }
+
+    /* ================================================================
+       MILESTONE SYSTEM — break at 25 / 50 / 75 %
+    ================================================================ */
+    const MS_DATA = {
+      25: { emoji: '🌱', title: '25% Done!', sub: 'Great start, keep going!' },
+      50: { emoji: '🔥', title: 'Halfway!', sub: 'You\'re really getting it!' },
+      75: { emoji: '⚡', title: '75% Done!', sub: 'Almost there, don\'t stop!' },
+    };
+
+    function checkMilestone(prev, now) {
+      for (const pct of [25, 50, 75]) {
+        if (prev < pct && now >= pct && !shownMilestones.has(pct)) {
+          shownMilestones.add(pct);
+          setTimeout(() => showMilestone(pct), 700);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function showMilestone(pct) {
+      const d = MS_DATA[pct];
+      document.getElementById('ms-emoji').textContent = d.emoji;
+      document.getElementById('ms-title').textContent = d.title;
+      document.getElementById('ms-sub').textContent = d.sub;
+      document.getElementById('ms-bar').style.width = pct + '%';
+      document.getElementById('ms-overlay').classList.add('show');
+
+      // Auto-dismiss after 4 seconds
+      clearTimeout(msTimer);
+      msTimer = setTimeout(() => dismissMilestone(true), 4000);
+    }
+
+    function dismissMilestone(continueQuiz = true) {
+      clearTimeout(msTimer);
+      document.getElementById('ms-overlay').classList.remove('show');
+      if (continueQuiz) setTimeout(nextQ, 150);
+    }
+
+    /* ================================================================
+       KEYBOARD SUPPORT
+    ================================================================ */
+    document.addEventListener('keydown', e => {
+      const active = document.querySelector('.screen.active')?.id;
+      if (active === 'screen-quiz') {
+        if (e.key >= '0' && e.key <= '9') nk(e.key);
+        else if (e.key === 'Backspace') nk('del');
+        else if (e.key === 'Enter') nk('ok');
+        else if (e.key === 'Escape') exitQuiz();
+      }
+    });
+
+    /* ================================================================
+       CELEBRATION
+    ================================================================ */
+    function showCelebration() {
+      stopTimer();
+      const total = sess.correct + sess.wrong;
+      const acc = total > 0 ? Math.round(sess.correct / total * 100) : 0;
+      const best = sess.bestMs < Infinity ? (sess.bestMs / 1000).toFixed(1) + 's' : '—';
+
+      document.getElementById('cel-sub').textContent = `You mastered the ×${curTable} table! 🎉`;
+      document.getElementById('cel-acc').textContent = acc + '%';
+      document.getElementById('cel-time').textContent = best;
+      document.getElementById('cel-streak').textContent = sess.bestStreak;
+
+      const nxt = curTable < 30 ? curTable + 1 : null;
+      const nb = document.getElementById('cel-next');
+      if (nxt) { nb.textContent = `Next: ×${nxt} →`; nb.style.display = ''; }
+      else { nb.style.display = 'none'; }
+
+      launchConfetti();
+      showScreen('screen-celebrate');
+    }
+
+    function goNext() {
+      const nxt = curTable < 30 ? curTable + 1 : null;
+      if (nxt && isOpen(nxt)) startTable(nxt);
+      else showTableSelect();
+    }
+
+    function launchConfetti() {
+      const colors = ['#7c3aed', '#22d3ee', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#fb7185'];
+      for (let i = 0; i < 65; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        const sz = 7 + Math.random() * 9;
+        const dur = 2.5 + Math.random() * 2;
+        const del = Math.random() * 1.8;
+        const shp = ['50%', '2px', '30%'][Math.floor(Math.random() * 3)];
+        el.style.cssText = `left:${Math.random() * 100}vw;top:-12px;width:${sz}px;height:${sz}px;background:${colors[i % colors.length]};border-radius:${shp};--dur:${dur}s;--delay:${del}s;`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), (dur + del + 0.5) * 1000);
+      }
+    }
+
+    /* ================================================================
+       STAR CANVAS
+    ================================================================ */
+    (function () {
+      const cv = document.getElementById('star-canvas');
+      const cx = cv.getContext('2d');
+      let stars = [], W, H;
+
+      function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+
+      function make() {
+        stars = [];
+        const n = Math.floor(W * H / 5000);
+        for (let i = 0; i < n; i++) {
+          stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + 0.2, a: Math.random(), da: (Math.random() * 0.007 + 0.002) * (Math.random() > .5 ? 1 : -1) });
+        }
+      }
+
+      function draw() {
+        cx.clearRect(0, 0, W, H);
+        stars.forEach(s => {
+          s.a += s.da;
+          if (s.a > 1 || s.a < 0.08) s.da *= -1;
+          cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          cx.fillStyle = `rgba(255,255,255,${Math.max(0.08, s.a).toFixed(2)})`; cx.fill();
+        });
+        requestAnimationFrame(draw);
+      }
+
+      resize(); make(); draw();
+      window.addEventListener('resize', () => { resize(); make(); });
+    })();
+
+    /* ================================================================
+       BOOT
+    ================================================================ */
+    load();
+    initWelcome();
+  </script>
+</body>
+
+</html>
