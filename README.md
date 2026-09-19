@@ -2,7 +2,7 @@
 
 > A game-like multiplication trainer for primary school students — built for a real classroom.
 
-**Live demo:** _[Add your GitHub Pages URL here after deployment]_
+**Live demo:**  -https://githubvikrant.github.io/PracticeTable/-
 
 ---
 
@@ -42,19 +42,6 @@ This isn't simple right/wrong scoring. Each answer is judged on three factors:
 3. **Consistency** — a streak of correct answers gives bonus points up to +12 per answer
 
 Tables 2–5 progress **1.8× faster** and tables 6–11 progress **1.4× faster** than higher tables, matching how students actually learn (smaller tables are easier and should feel rewarding quickly).
-
----
-
-## Deploying to GitHub Pages
-
-1. Fork or clone this repository
-2. Make sure `index.html` is in the root of your `main` branch
-3. Go to **Settings → Pages → Source → Branch: main / (root)**
-4. Click **Save** — your site is live at `https://yourusername.github.io/repo-name` in ~30 seconds
-
-That's it. No build step, no dependencies, no server.
-
-> **Note on the user counter:** The live student count uses [CountAPI](https://countapi.xyz/), a free hit-counter service. It only works on HTTPS (deployed) — it will show `100+` when opened locally as a file.
 
 ---
 
